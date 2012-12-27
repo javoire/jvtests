@@ -15,7 +15,7 @@ io.sockets.on('connection', function (socket) {
 	socket.emit('initClient', socket.id);
 
 	socket.on('mousemove', function(data) {
-		socket.broadcast.emit('moving', data);
+		socket.emit('moving', data);
 	});
 	
 });
