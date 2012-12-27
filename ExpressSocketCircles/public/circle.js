@@ -14,11 +14,3 @@ Circle.prototype.draw = function(context) {
 	this.context.closePath();
 	this.context.fill();
 }
-
-Circle.prototype.getX = function() {
-	return this.x;
-}
-
-Circle.prototype.getY = function() {
-	return this.y;
-}
