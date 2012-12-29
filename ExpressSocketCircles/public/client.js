@@ -1,52 +1,63 @@
 $(function() {
 	var socket = io.connect('http://localhost');
-
 	var canvas = $('#canvas');
 	var context = canvas[0].getContext("2d");
-	// canvasWidth = $("#canvas").width();
-	// canvasHeight = $("#canvas").height();
+	var canvasWidth = $("#canvas").width();
+	var canvasHeight = $("#canvas").height();
 	var circles = {};
-	var id = { 
-			id : '', 
-			circle : ''
-		};
-	// var clients = {};
+	var myData = {
+		color : '#000', // TODO: randomize color
+		x : 0,
+		y : 0
+	};
 
-	// function draw() {
-	// 	context.fillStyle = "#fff";
-	// 	context.fillRect(0, 0, canvasWidth, canvasHeight);
+	console.log(myData.color);
 
-	// 	// here draw own and other clients circles
-	// }
+	function draw() {
+		context.fillStyle = "#fff";
+		context.fillRect(0, 0, canvasWidth, canvasHeight);
+		if(!(typeof circles[myData.id] == 'undefined')) {
+			for (var id in circles) {
+				drawCircle(circles[id].x, circles[id].y, circles[id].color);
+			}
+		}
+	}
 
-	socket.on('initClient', function(newId) {
-		id = newId;
-		circles[id] = id;
-		circles[id][circle] = 'new Circle(0,0,context)';
-		// circles[id].circle = new Circle(0,0,context);
-		console.log(circles)
+	function drawCircle (x, y, color) {
+		context.beginPath();
+		context.fillStyle = color;
+		context.arc(x, y-30, 20, 0, Math.PI*2, true); // TODO: varför -30?
+		context.closePath();
+		context.fill();
+	}
+
+	socket.on('initClient', function(id) {
+		myData['id'] = id;
+		$('p').html(id);
+		setTimeout(setInterval(draw, 10), 1000); // draw every 10 msec // TODO: weird that we have to wait 1 sec
 	});
 
 	socket.on('moving', function(data) {
-		// here draw circles on canvas etc
+		// TODO: unnecessary to update color var since it's static
+		circles[data.id] = data; // update all (x, y color) data from other clients
 	});
-	// setInterval(draw, 10); // draw every 10 msec
+	
 
-	// circle = new Circle(50, 50, context);
+	canvas.on('removeClient', function(clientID) {
+		// TODO: delete client form circles
+	})
 
-	// socket.emit('newCircle', {
-	// 	color: '#F00',
-	// 	x: circle.x,
-	// 	y: circle.y
-	// })
-	// console.log(circles);
+	var lastEmit = $.now();
 
 	canvas.mousemove(function(e) {
-		socket.emit('mousemove', {
-			'id' : id,
-			'x' : e.pageX,
-			'y' : e.pageY,
-			'color' : '#000'
-		});
+		myData['x'] = e.pageX;
+		myData['y'] = e.pageY;
+		if(	!(typeof myData == 'undefined')) {
+			circles[myData.id] = myData; // update my own data
+		}
+		if($.now() - lastEmit > 30){
+			socket.emit('mousemove', myData ); // emit my data to all other clients
+		}
+		lastEmit = $.now();
 	});
 });

@@ -3,6 +3,8 @@ var express 	= require('express')
 	, server 	= require('http').createServer(app)
 	, io 		= require('socket.io').listen(server);
 
+var clients = {};
+
 server.listen(3000);
 
 app.use(express.static(__dirname + '/public'));
@@ -15,7 +17,10 @@ io.sockets.on('connection', function (socket) {
 	socket.emit('initClient', socket.id);
 
 	socket.on('mousemove', function(data) {
-		socket.emit('moving', data);
+		socket.broadcast.emit('moving', data);
 	});
-	
+
+	socket.on('disconnect', function() {
+		socket.broadcast.emit('removeClient', socket.id)
+	})
 });
